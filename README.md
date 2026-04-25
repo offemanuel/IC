@@ -20,7 +20,7 @@ if not os.path.exists('IC'):
 !pip install -q numpy matplotlib
 
 # Menu de escolha
-print("--- Simulador de Integração Numérica ---")
+print("\n")
 print("1 - Subcycling")
 print("2 - Passo adaptativo (PID)")
 print("3 - Passo fixo")
