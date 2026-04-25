@@ -205,7 +205,6 @@ massa_final_rk3 = massa_rk3[-1]
 print(massa_final_rk3)
 
 
-"""
 # Gráficos 
 plt.rcParams['text.usetex'] = False
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(9, 10), sharex=True)
@@ -242,4 +241,3 @@ ax3.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
-#"""
