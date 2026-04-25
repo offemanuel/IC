@@ -215,7 +215,7 @@ vol_i = (4/3) * np.pi * r_i**3
 m_i = vol_i * C_ar * H_estrela.calcular_H_estrela(T_gota_em_k, S) * R_atm * T_gota_em_k
 
 # Passo da Massa
-H_macro = 1e-2 
+H_macro = 1e-3 
 
 # sub-passos para r e T dentro de cada passo de m
 M_sub   = 10    
