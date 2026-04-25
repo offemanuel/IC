@@ -397,4 +397,4 @@ ax3.legend(fontsize=9, loc='best')
 ax3.grid(True, alpha=0.3, which='both')
 
 plt.tight_layout()
-plt.savefig("grafico.png", dpi=300)
+plt.savefig("grafico.pdf")
