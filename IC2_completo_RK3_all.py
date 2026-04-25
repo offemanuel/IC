@@ -357,8 +357,8 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 7))
 ax1.set_title(f'Número de pontos: Passo Fixo={len(tempo_fixo)}, Subcycling={len(tempo_sub)}')
 ax1.plot(tempo_fixo, raio_fixo * 1e6, '^-', color=COR_FIXO, linewidth=1, markersize=8,
          label=f'Passo fixo   | Raio_final = {raio_fixo[-1]*1e6} µm')
-#ax1.plot(tempo_pid,  raio_pid  * 1e6, '*-', color=COR_PID,  linewidth=1, markersize=8,
-#         label=f'PID adapt.   | Raio_final = {raio_pid[-1]*1e6} µm')
+ax1.plot(tempo_pid,  raio_pid  * 1e6, '*-', color=COR_PID,  linewidth=1, markersize=8,
+         label=f'PID adapt.   | Raio_final = {raio_pid[-1]*1e6} µm')
 ax1.plot(tempo_sub,  raio_sub  * 1e6, 'o-', color=COR_SUB,  linewidth=1, markersize=4,
          label=f'Subcycling   | Raio_final = {raio_sub[-1]*1e6} µm')
 
@@ -372,8 +372,8 @@ ax1.grid(True, alpha=0.3, which='both')
 
 ax2.plot(tempo_fixo, temp_fixo - 273.15, '^-', color=COR_FIXO, linewidth=1, markersize=8,
          label=f'Passo fixo   | Temperatura_final = {temp_fixo[-1]-273.15} °C')
-#ax2.plot(tempo_pid,  temp_pid  - 273.15, '*-', color=COR_PID,  linewidth=1, markersize=8,
-#         label=f'PID adapt.   | Temperatura_final = {temp_pid[-1]-273.15} °C')
+ax2.plot(tempo_pid,  temp_pid  - 273.15, '*-', color=COR_PID,  linewidth=1, markersize=8,
+         label=f'PID adapt.   | Temperatura_final = {temp_pid[-1]-273.15} °C')
 ax2.plot(tempo_sub,  temp_sub  - 273.15, 'o-', color=COR_SUB,  linewidth=1, markersize=4,
          label=f'Subcycling   | Temperatura_final = {temp_sub[-1]-273.15} °C')
 
@@ -385,8 +385,8 @@ ax2.grid(True, alpha=0.3, which='both')
 # GRÁFICO 3: MASSA (ax3)
 ax3.plot(tempo_fixo, massa_fixo, '^-', color=COR_FIXO, linewidth=1, markersize=8,
          label=f'Passo fixo   | Massa_final = {massa_fixo[-1]} mol')
-#ax3.plot(tempo_pid,  massa_pid,  '*-', color=COR_PID,  linewidth=1, markersize=8,
-#         label=f'PID adapt.   | Massa_final = {massa_pid[-1]} mol')
+ax3.plot(tempo_pid,  massa_pid,  '*-', color=COR_PID,  linewidth=1, markersize=8,
+         label=f'PID adapt.   | Massa_final = {massa_pid[-1]} mol')
 ax3.plot(tempo_sub,  massa_sub,  'o-', color=COR_SUB,  linewidth=1, markersize=4,
          label=f'Subcycling   | Massa_final = {massa_sub[-1]} mol')
 
