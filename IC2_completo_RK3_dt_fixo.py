@@ -172,7 +172,7 @@ def rk3_sistema(f_system, y0, t):
 
 
 # Discretização
-dt_fixo    = 1e-2
+dt_fixo    = 1e-4
 tempo_final = tau_f
 n_steps    = int(tau_f / dt_fixo)
 tempo = np.linspace(0, tempo_final, n_steps)
