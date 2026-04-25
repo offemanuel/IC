@@ -223,7 +223,7 @@ M_sub   = 10
 # Solução com RK3 por controle de subpassos
 t_mr, raio_rk3_sub, temperatura_rk3_sub, massa_rk3_sub = rk3_multirate_completo(r_i, T_gota_em_k, m_i, tau_f, H_macro, M_sub)
 
-print(massa_rk3_sub[-1])
+#print(massa_rk3_sub[-1])
 #"""
 # Gráficos
 plt.rcParams['text.usetex'] = False
