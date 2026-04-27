@@ -5,8 +5,11 @@ Você pode rodar este projeto diretamente no Google Colab, sem instalar nada loc
 ### Passos:
 
 1° Acesse: [https://colab.research.google.com/](https://colab.research.google.com/)
+
 2° Clique em **"Novo notebook"**
+
 3° Clique em **"Conectar"**
+
 4° Cole o código abaixo em uma célula e execute:
 
 ```python
