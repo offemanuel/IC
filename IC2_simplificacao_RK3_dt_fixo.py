@@ -203,7 +203,7 @@ ax3.grid(True, alpha=0.3)
 
 plt.tight_layout()
 #plt.show()
-plt.savefig("grafico_fixo.png")
+plt.savefig("grafico_fixo_simple.png")
 #"""
 
 
