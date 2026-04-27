@@ -197,7 +197,7 @@ fig.suptitle(
 )
  
 # Raio
-ax1.plot(t_mr, raio_simp * 1e6, 'o-', color='#0D00FF', linewidth=1, markersize=2,
+ax1.plot(t_mr, raio_simp * 1e6, 'o-', color='#FF0000', linewidth=1, markersize=2,
          label=f'r_final = {raio_simp[-1] * 1e6} µm')
 ax1.set_ylabel('Raio da Gota (µm)', fontsize=12)
 ax1.set_xscale('log')
@@ -213,7 +213,7 @@ ax2.legend(fontsize=10)
 ax2.grid(True, alpha=0.3)
  
 # Massa
-ax3.semilogx(t_mr, massa_rk3_sub, 'o-', color='#009900', linewidth=1,
+ax3.semilogx(t_mr, massa_rk3_sub, 'o-', color='#FF0000', linewidth=1,
              markersize=2, label=f'Massa final: {massa_rk3_sub[-1]} mol')
 ax3.set_xlabel('Tempo (s)', fontsize=12)
 ax3.set_ylabel('Massa (mol)', fontsize=12)
