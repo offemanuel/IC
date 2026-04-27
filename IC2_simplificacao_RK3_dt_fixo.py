@@ -166,7 +166,6 @@ temp_simp = T_simplificado(tempo)
 massa_final = massa_rk3[-1]
 print(massa_final)
 
-#"""
 # Gráficos
 plt.rcParams['text.usetex'] = False
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(9, 10), sharex=True)
@@ -202,7 +201,7 @@ ax3.legend(fontsize=10)
 ax3.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.show()
-#"""
+#plt.show()
+plt.savefig("grafico_dt_fixo_simplificacao.png")
 
 
