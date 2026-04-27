@@ -35,7 +35,6 @@ T0 = 273.15
 P0 = 1013.25
 c_ps = 4000        # Calor específico da spray
 
-
 def func(U_f):
     const = (2 * r_i**2 * g) / (9 * v_ar) * ((rho_w / rho_ar) - 1)
     a = 1 + 0.158 * ((2 * r_i * U_f / v_ar) ** (2 / 3))
@@ -104,101 +103,94 @@ def dzeta_dr(r_i):
     return term1 - term2
 
 r0 = (1.1) * (3 * m_s_val / (4 * np.pi * rho_s_val)) ** (1 / 3)
-
 r_eq = metodo_newton.Newton(zeta, dzeta_dr, r0, 1e-6, 100)
 
 tau_r = calcular_tau_r(f, M_H2O, sigma_s_val, R, T_a_em_k, rho_w, r_i, rho_s_val, m_s_val, v_ion, Phi_s_val, M_NaCl, D_linha_w_val, e_sat_val, L_v_val, k_linha_a_val, r_eq)[1]
 
-# Sistema
-def f_r_T_m(t, vars):
 
+# Condição inicial da massa 
+vol_i = (4 / 3) * np.pi * r_i**3
+H_i   = H_estrela.calcular_H_estrela(T_gota_em_k, S)
+m_i   = vol_i * C_ar * H_i * R_atm * T_gota_em_k
+y0    = np.array([r_i, T_gota_em_k, m_i])
+
+# MÉTODOS COM SISTEMA DE EDO COMPLETO
+def f_r_T_m(t, vars):
     r, T, m = vars
 
     rho_ww_novo    = m_s.calcular_rho_ww(T - 273.15)
     m_w_novo       = rho_s.calcular_massa_agua(r, rho_ww_novo)
     sigma_s_novo   = sigma_s.calculate_sigma_s(T - 273.15, m_s_val, m_w_novo)
     Phi_s_novo     = Phi_s.calcular_phi_s(m_s_val, M_NaCl, m_w_novo)
-    D_linha_w_novo = D_linha_w.calculate_Dw_prime(T, R, P, r, M_H2O, T0, P0, alpha_c=0.036, Delta_w=8e-8)
+    D_linha_w_novo = D_linha_w.calculate_Dw_prime(T, R, P, r, M_H2O, T0, P0,
+                                                   alpha_c=0.036, Delta_w=8e-8)
     L_v_novo       = L_v.calcular_lv(T - 273.15)
-    k_linha_a_novo = k_linha_a.calculate_K_linha_a(T - 273.15, T, P, r, R, T0, P0, M_a=28.9644e-3, alpha_T=0.7, delta_T=2.16e-7, c_pa=1.006e3)
+    k_linha_a_novo = k_linha_a.calculate_K_linha_a(T - 273.15, T, P, r, R, T0, P0,
+                                                    M_a=28.9644e-3, alpha_T=0.7,
+                                                    delta_T=2.16e-7, c_pa=1.006e3)
     rho_vr_novo    = rho_vr.calcular_rho_vr(
         M_H2O,
         e_sat_esp.calcular_esat(T - 273.15),
-        code_exp_y.calcular_exp_y(M_H2O, sigma_s_novo, T_a_em_k, rho_w, R, v_ion, Phi_s_novo, m_s_val, r, rho_s_val, M_NaCl),
+        code_exp_y.calcular_exp_y(M_H2O, sigma_s_novo, T_a_em_k, rho_w, R,
+                                   v_ion, Phi_s_novo, m_s_val, r, rho_s_val, M_NaCl),
         R, T_a_em_k
     )
 
-    # dr/dt 
-    Y    = (2 * M_H2O * sigma_s_novo / (R * T_a_em_k * rho_w * r)) \
-         - (v_ion * Phi_s_novo * m_s_val * (M_H2O / M_NaCl) / (m_w_novo - m_s_val))
+    Y    = ((2 * M_H2O * sigma_s_novo / (R * T_a_em_k * rho_w * r))
+            - (v_ion * Phi_s_novo * m_s_val * (M_H2O / M_NaCl) / (m_w_novo - m_s_val)))
     den1 = rho_s_val * R * T_a_em_k / (D_linha_w_novo * M_H2O * e_sat_val)
-    den2 = rho_s_val * L_v_novo / (k_linha_a_novo * T_a_em_k) * (L_v_novo * M_H2O / (R * T_a_em_k) - 1)
+    den2 = (rho_s_val * L_v_novo / (k_linha_a_novo * T_a_em_k)
+            * (L_v_novo * M_H2O / (R * T_a_em_k) - 1))
     den  = den1 + den2
     dr_dt = ((f - 1) - Y) / (r * den)
 
-    # dT/dt 
-    dT_dt = 3 / (rho_s_val * c_ps * r**2) * (
-        k_linha_a_novo * (T_a_em_k - T) + L_v_novo * D_linha_w_novo * (rho_v_val - rho_vr_novo))
+    dT_dt = (3 / (rho_s_val * c_ps * r**2)) * (
+        k_linha_a_novo * (T_a_em_k - T)
+        + L_v_novo * D_linha_w_novo * (rho_v_val - rho_vr_novo)
+    )
 
-    # dm/dt 
-    H_novo  = H_estrela.calcular_H_estrela(T, S)
-    Dg_novo = Dg_estrela.calcular_Dg_estrela(r, T_a_em_k, R_atm)
-    vol     = (4 / 3) * np.pi * r**3
-    C_gota  = m / vol                                      
-    dm_dt   = 4 * np.pi * r * Dg_novo * (C_ar - C_gota / (H_novo * R_atm * T))
+    H_nov  = H_estrela.calcular_H_estrela(T, S)
+    Dg_nov = Dg_estrela.calcular_Dg_estrela(r, T_a_em_k, R_atm)
+    vol    = (4 / 3) * np.pi * r**3
+    C_gota = m / vol
+    dm_dt  = 4 * np.pi * r * Dg_nov * (C_ar - C_gota / (H_nov * R_atm * T))
 
     return np.array([dr_dt, dT_dt, dm_dt])
 
-# Condição inicial da massa
-vol_i = (4 / 3) * np.pi * r_i**3
-H_i   = H_estrela.calcular_H_estrela(T_gota_em_k, S)
-m_i   = vol_i * C_ar * H_i * R_atm * T_gota_em_k
-y0    = np.array([r_i, T_gota_em_k, m_i])
 
-# 1° MÉTODO - RK3 passo fixo
+# Completo 1: RK3 passo fixo 
 def rk3_sistema(f_system, y0, t):
     num_pontos = len(t)
-    n_vars     = len(y0)
-    y          = np.zeros((num_pontos, n_vars))
-    y[0]       = y0
-
+    y = np.zeros((num_pontos, len(y0)))
+    y[0] = y0
     for n in range(num_pontos - 1):
         dt  = t[n + 1] - t[n]
-        y_n = y[n]
-        t_n = t[n]
+        y_n = y[n];  t_n = t[n]
         F1 = f_system(t_n, y_n)
         y1 = y_n + dt * F1
         F2 = f_system(t_n + dt, y1)
         y2 = (3/4) * y_n + (1/4) * (y1 + dt * F2)
         F3 = f_system(t_n + dt / 2, y2)
         y[n + 1] = (1/3) * y_n + (2/3) * (y2 + dt * F3)
-
     return y
 
 dt_fixo    = 1e-4
 n_steps    = int(tau_f / dt_fixo)
 tempo_fixo = np.linspace(0, tau_f, n_steps)
 
-# Solução
 sol_fixo   = rk3_sistema(f_r_T_m, y0, tempo_fixo)
 raio_fixo  = sol_fixo[:, 0]
 temp_fixo  = sol_fixo[:, 1]
 massa_fixo = sol_fixo[:, 2]
 
-# 2° MÉTODO - RK3 passo adaptativo (PID)
-def rk3_adaptativo(f_system, y0, t0, t_final, dt_min, dt_max,
-                   dt_inicial, tol, K_P, K_I, K_D):
-    t_hist  = [t0]
-    y_hist  = [y0]
-    dt_hist = [dt_inicial]
 
-    dt      = dt_inicial
-    dt_prev = dt_min
-    e_n_1   = tol
-    e_n_2   = tol
-
-    y_n = np.array(y0, dtype=float)
-    t_n = t0
+# Completo 2: RK3 passo adaptativo PID 
+def rk3_adaptativo_completo(f_system, y0, t0, t_final, dt_min, dt_max,
+                             dt_inicial, tol, K_P, K_I, K_D):
+    t_hist = [t0];  y_hist = [y0];  dt_hist = [dt_inicial]
+    dt = dt_inicial;  dt_prev = dt_min
+    e_n_1 = tol;  e_n_2 = tol
+    y_n = np.array(y0, dtype=float);  t_n = t0
 
     while t_n < t_final:
         if t_n + dt > t_final:
@@ -217,49 +209,34 @@ def rk3_adaptativo(f_system, y0, t0, t_final, dt_min, dt_max,
         e_n = max(e_r, e_T, e_m)
 
         if e_n > tol and dt > dt_min:
-            fator = min(1 / e_n, 0.8)
-            dt    = max(fator * dt, dt_min)
+            fator   = min(1 / e_n, 0.8)
+            dt      = max(fator * dt, dt_min)
             dt_prev = (dt**2) / dt_prev
             continue
 
-        t_n += dt
-        y_n  = y_next
-        t_hist.append(t_n)
-        y_hist.append(y_n)
-        dt_hist.append(dt)
+        t_n += dt;  y_n = y_next
+        t_hist.append(t_n);  y_hist.append(y_n);  dt_hist.append(dt)
 
-        fator_P  = (e_n_1 / e_n) ** K_P
-        fator_I  = (tol   / e_n) ** K_I
-        fator_D  = ((e_n_1**2) / (e_n * e_n_2)) ** K_D
-        dt_next  = fator_P * fator_I * fator_D * dt
-        dt       = max(min(dt_next, dt_max), dt_min)
-        dt_prev  = dt
-        e_n_2    = e_n_1
-        e_n_1    = e_n
+        fator_P = (e_n_1 / e_n)               ** K_P
+        fator_I = (tol   / e_n)               ** K_I
+        fator_D = (e_n_1**2 / (e_n * e_n_2))  ** K_D
+        dt_next = fator_P * fator_I * fator_D * dt
+        dt      = np.clip(dt_next, dt_min, dt_max)
+        dt_prev = dt;  e_n_2 = e_n_1;  e_n_1 = e_n
 
     return np.array(t_hist), np.array(y_hist), np.array(dt_hist)
 
-# Solução
-tempo_pid, sol_pid, dts_pid = rk3_adaptativo(
-    f_system  = f_r_T_m,
-    y0        = y0,
-    t0        = 0.0,
-    t_final   = tau_f,
-    dt_min    = 1e-6,
-    dt_max    = 1.0,
-    dt_inicial= 1e-4,
-    tol       = 1e-4,
-    K_P       = 0.075,
-    K_I       = 0.175,
-    K_D       = 0.01
+tempo_pid, sol_pid, _ = rk3_adaptativo_completo(
+    f_r_T_m, y0, 0.0, tau_f,
+    dt_min=1e-6, dt_max=1.0, dt_inicial=1e-4, tol=1e-4,
+    K_P=0.075, K_I=0.175, K_D=0.01
 )
-
 raio_pid  = sol_pid[:, 0]
 temp_pid  = sol_pid[:, 1]
 massa_pid = sol_pid[:, 2]
 
 
-# 3° MÉTODO - RK3 subcycling
+# Completo 3: RK3 subcycling
 def _grandezas_dinamicas(r, T):
     rho_ww_novo    = m_s.calcular_rho_ww(T - 273.15)
     m_w_novo       = rho_s.calcular_massa_agua(r, rho_ww_novo)
@@ -288,114 +265,240 @@ def _grandezas_dinamicas(r, T):
 
 def f_rapido(y_rapido, m_fixo):
     r, T = y_rapido
-    k_linha_a_novo, D_linha_w_novo, L_v_novo, rho_vr_novo, Y, den = _grandezas_dinamicas(r, T)
+    k_a, D_w, Lv, rho_vr_n, Y, den = _grandezas_dinamicas(r, T)
     dr_dt = ((f - 1) - Y) / (r * den)
     dT_dt = (3 / (rho_s_val * c_ps * r**2)) * (
-        k_linha_a_novo * (T_a_em_k - T)
-        + L_v_novo * D_linha_w_novo * (rho_v_val - rho_vr_novo)
+        k_a * (T_a_em_k - T) + Lv * D_w * (rho_v_val - rho_vr_n)
     )
     return np.array([dr_dt, dT_dt])
 
-def f_lento(m, r_final, T_final):
+def f_lento_completo(m, r_final, T_final):
     H_nov  = H_estrela.calcular_H_estrela(T_final, S)
     Dg_nov = Dg_estrela.calcular_Dg_estrela(r_final, T_a_em_k, R_atm)
     vol    = (4 / 3) * np.pi * r_final**3
     C_gota = m / vol
     return 4 * np.pi * r_final * Dg_nov * (C_ar - C_gota / (H_nov * R_atm * T_final))
 
-def rk3_step(f, y, dt, *args):
-    k1 = f(y, *args)
-    y1 = y + dt * k1
-    k2 = f(y1, *args)
-    y2 = (3/4) * y + (1/4) * (y1 + dt * k2)
+def rk3_step_vec(f, y, dt, *args):
+    k1 = f(y, *args);  y1 = y + dt * k1
+    k2 = f(y1, *args); y2 = (3/4) * y + (1/4) * (y1 + dt * k2)
     k3 = f(y2, *args)
     return (1/3) * y + (2/3) * (y2 + dt * k3)
 
-def passo_multirate(r_n, T_n, m_n, H, M):
-    h        = H / M
-    y_rapido = np.array([r_n, T_n])
+def passo_multirate_completo(r_n, T_n, m_n, H, M):
+    h = H / M
+    y_rap = np.array([r_n, T_n])
     for _ in range(M):
-        y_rapido = rk3_step(f_rapido, y_rapido, h, m_n)
-    r_new, T_new = y_rapido
-    m_new = rk3_step(f_lento, m_n, H, r_new, T_new)
+        y_rap = rk3_step_vec(f_rapido, y_rap, h, m_n)
+    r_new, T_new = y_rap
+    m_new = rk3_step_vec(f_lento_completo, m_n, H, r_new, T_new)
     return r_new, T_new, m_new
 
-def rk3_multirate_completo(r0, T0_val, m0, t_final, H, M):
-    t_list = [0.0]; r_list = [r0]; T_list = [T0_val]; m_list = [m0]
+def rk3_multirate_completo_solver(r0, T0_val, m0, t_final, H, M):
+    t_l = [0.0]; r_l = [r0]; T_l = [T0_val]; m_l = [m0]
     t, r, T, m = 0.0, r0, T0_val, m0
     while t < t_final:
-        dt_macro = min(H, t_final - t)
-        if dt_macro < 1e-15:
-            break
-        r, T, m = passo_multirate(r, T, m, dt_macro, M)
-        t += dt_macro
-        t_list.append(t); r_list.append(r)
-        T_list.append(T); m_list.append(m)
-    return (np.array(t_list), np.array(r_list),
-            np.array(T_list), np.array(m_list))
+        H_eff = min(H, t_final - t)
+        if H_eff < 1e-15: break
+        r, T, m = passo_multirate_completo(r, T, m, H_eff, M)
+        t += H_eff
+        t_l.append(t); r_l.append(r); T_l.append(T); m_l.append(m)
+    return np.array(t_l), np.array(r_l), np.array(T_l), np.array(m_l)
 
-H_macro = 1e-3
-M_sub   = 10
+H_macro_c = 1e-3
+M_sub_c   = 10
 
-# Solução
-tempo_sub, raio_sub, temp_sub, massa_sub = rk3_multirate_completo(
-    r_i, T_gota_em_k, m_i, tau_f, H_macro, M_sub)
+tempo_sub, raio_sub, temp_sub, massa_sub = rk3_multirate_completo_solver(
+    r_i, T_gota_em_k, m_i, tau_f, H_macro_c, M_sub_c
+)
 
+
+# MÉTODOS COM SIMPLIFICAÇÕES EXPONENCIAIS 
+def r_simplificado(t):
+    return r_eq + (r_i - r_eq) * np.exp(-t / tau_r)
+
+def T_simplificado(t):
+    return T_eq_em_k + (T_gota_em_k - T_eq_em_k) * np.exp(-t / tau_T)
+
+def f_m(t, m):
+    r = r_simplificado(t);  T = T_simplificado(t)
+    H_t   = H_estrela.calcular_H_estrela(T, S)
+    Dg_t  = Dg_estrela.calcular_Dg_estrela(r, T_a_em_k, R_atm)
+    vol   = (4 / 3) * np.pi * r**3
+    C_gota = m / vol
+    return 4 * np.pi * r * Dg_t * (C_ar - C_gota / (H_t * R_atm * T))
+
+# Simplificado 1: RK3 passo fixo 
+def rk3_escalar(f_ode, m0, t):
+    n  = len(t)
+    mv = np.zeros(n);  mv[0] = m0
+    for i in range(n - 1):
+        dt  = t[i + 1] - t[i];  m_n = mv[i];  t_n = t[i]
+        F1  = f_ode(t_n, m_n);          m1 = m_n + dt * F1
+        F2  = f_ode(t_n + dt, m1);      m2 = (3/4)*m_n + (1/4)*(m1 + dt*F2)
+        F3  = f_ode(t_n + dt/2, m2)
+        mv[i + 1] = (1/3)*m_n + (2/3)*(m2 + dt*F3)
+    return mv
+
+dt_simp    = 1e-4
+n_simp     = int(tau_f / dt_simp)
+tempo_simp = np.linspace(0, tau_f, n_simp)
+
+massa_simp_fixo = rk3_escalar(f_m, m_i, tempo_simp)
+raio_simp_fixo  = r_simplificado(tempo_simp)
+temp_simp_fixo  = T_simplificado(tempo_simp)
+
+
+# Simplificado 2: RK3 passo adaptativo PID 
+def rk3_adaptativo_escalar(f_ode, m0, t0, t_final, dt_min, dt_max,
+                            dt_inicial, tol, K_P, K_I, K_D):
+    t_hist = [t0];  m_hist = [m0];  dt_hist = [dt_inicial]
+    dt = dt_inicial;  dt_prev = dt_min
+    e_n_1 = tol;  e_n_2 = tol
+    m_n = float(m0);  t_n = t0
+
+    while t_n < t_final:
+        if t_n + dt > t_final:
+            dt = t_final - t_n
+
+        F1 = f_ode(t_n, m_n);           m1 = m_n + dt * F1
+        F2 = f_ode(t_n + dt, m1);       m2 = (3/4)*m_n + (1/4)*(m1 + dt*F2)
+        F3 = f_ode(t_n + dt/2, m2)
+        m_next = (1/3)*m_n + (2/3)*(m2 + dt*F3)
+
+        e_n = abs(m_next - m_n) / abs(m_next)
+
+        if e_n > tol and dt > dt_min:
+            fator   = min(1 / e_n, 0.8)
+            dt      = max(fator * dt, dt_min)
+            dt_prev = (dt**2) / dt_prev
+            continue
+
+        t_n += dt;  m_n = m_next
+        t_hist.append(t_n);  m_hist.append(m_n);  dt_hist.append(dt)
+
+        fator_P = (e_n_1 / e_n)               ** K_P
+        fator_I = (tol   / e_n)               ** K_I
+        fator_D = (e_n_1**2 / (e_n * e_n_2))  ** K_D
+        dt_next = fator_P * fator_I * fator_D * dt
+        dt      = np.clip(dt_next, dt_min, dt_max)
+        dt_prev = dt;  e_n_2 = e_n_1;  e_n_1 = e_n
+
+    return np.array(t_hist), np.array(m_hist), np.array(dt_hist)
+
+tempo_spid, massa_simp_pid, _ = rk3_adaptativo_escalar(
+    f_m, m_i, 0.0, tau_f,
+    dt_min=1e-6, dt_max=1.0, dt_inicial=1e-4, tol=1e-4,
+    K_P=0.075, K_I=0.175, K_D=0.01
+)
+raio_simp_pid = r_simplificado(tempo_spid)
+temp_simp_pid = T_simplificado(tempo_spid)
+
+
+# Simplificado 3: RK3 subcycling 
+def rk3_step_esc(f_ode, m, t, dt):
+    k1 = f_ode(t, m);           m1 = m + dt * k1
+    k2 = f_ode(t + dt, m1);     m2 = (3/4)*m + (1/4)*(m1 + dt*k2)
+    k3 = f_ode(t + dt/2, m2)
+    return (1/3)*m + (2/3)*(m2 + dt*k3)
+
+def passo_multirate_simp(m_n, t_n, H, M):
+    h = H / M;  m = m_n
+    for k in range(M):
+        m = rk3_step_esc(f_m, m, t_n + k * h, h)
+    return m
+
+def rk3_multirate_simp(m0, t_final, H, M):
+    t_l = [0.0];  m_l = [m0];  t, m = 0.0, m0
+    while t < t_final:
+        H_eff = min(H, t_final - t)
+        if H_eff < 1e-15: break
+        m  = passo_multirate_simp(m, t, H_eff, M)
+        t += H_eff
+        t_l.append(t);  m_l.append(m)
+    return np.array(t_l), np.array(m_l)
+
+H_macro_s = 1e-3
+M_sub_s   = 10
+
+tempo_ssub, massa_simp_sub = rk3_multirate_simp(m_i, tau_f, H_macro_s, M_sub_s)
+raio_simp_sub = r_simplificado(tempo_ssub)
+temp_simp_sub = T_simplificado(tempo_ssub)
+
+print("Pontos:\n"
+    f"  Completo     | Fixo: {len(tempo_fixo)}  PID: {len(tempo_pid)}  Sub: {len(tempo_sub)}\n"
+    f"  Simplificado | Fixo: {len(tempo_simp)}  PID: {len(tempo_spid)}  Sub: {len(tempo_ssub)}")
 # Gráficos
 plt.rcParams['text.usetex'] = False
-plt.rcParams['font.size']   = 8
+plt.rcParams['font.size']   = 9
 
-COR_FIXO = '#0D00FF'   
-COR_PID  = "#73FF00"   
-COR_SUB  = "#FF0000"  
+C_FIXO = '#0D00FF'   
+C_PID  = "#73FF00"   
+C_SUB  = "#FF0000" 
 
-# Criando a moldura com 3 subplots empilhados
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 7))
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 9), sharex=True)
 
-# GRÁFICO 1: RAIO (ax1)
-#PID adaptativo={len(tempo_pid)}
-ax1.set_title(f'Número de pontos: Passo Fixo={len(tempo_fixo)}, PID adaptativo={len(tempo_pid)}, Subcycling={len(tempo_sub)}')
-ax1.plot(tempo_fixo, raio_fixo * 1e6, '^-', color=COR_FIXO, linewidth=1, markersize=8,
-         label=f'Passo fixo   | Raio_final = {raio_fixo[-1]*1e6} µm')
-ax1.plot(tempo_pid,  raio_pid  * 1e6, '*-', color=COR_PID,  linewidth=1, markersize=8,
-         label=f'PID adapt.   | Raio_final = {raio_pid[-1]*1e6} µm')
-ax1.plot(tempo_sub,  raio_sub  * 1e6, 'o-', color=COR_SUB,  linewidth=1, markersize=4,
-         label=f'Subcycling   | Raio_final = {raio_sub[-1]*1e6} µm')
+fig.suptitle(
+    f'Sistema de EDO Completo vs Simplificações Exponenciais',
+    fontsize=11,
+    fontweight='bold'
+)
 
+#  Raio 
+ax1.plot(tempo_fixo, raio_fixo * 1e6,      '^-', color=C_FIXO, lw=1, ms=4,
+         label=f'Completo   | Fixo        r={raio_fixo[-1]*1e6} µm')
+ax1.plot(tempo_pid,  raio_pid  * 1e6,      's-', color=C_FIXO,  lw=1, ms=4,
+         label=f'Completo   | PID         r={raio_pid[-1]*1e6} µm')
+ax1.plot(tempo_sub,  raio_sub  * 1e6,      'o-', color=C_FIXO,  lw=1, ms=3,
+         label=f'Completo   | Subcycling  r={raio_sub[-1]*1e6} µm')
+ax1.plot(tempo_simp, raio_simp_fixo * 1e6, '^--', color=C_SUB, lw=1, ms=4, alpha=0.7,
+         label=f'Simplific. | Fixo        r={raio_simp_fixo[-1]*1e6} µm')
+ax1.plot(tempo_spid, raio_simp_pid  * 1e6, 's--', color=C_SUB,  lw=1, ms=4, alpha=0.7,
+         label=f'Simplific. | PID         r={raio_simp_pid[-1]*1e6} µm')
+ax1.plot(tempo_ssub, raio_simp_sub  * 1e6, 'o--', color=C_SUB,  lw=1, ms=3, alpha=0.7,
+         label=f'Simplific. | Subcycling  r={raio_simp_sub[-1]*1e6} µm')
 ax1.set_ylabel('Raio (µm)')
 ax1.set_xscale('log')
 ax1.ticklabel_format(axis='y', useOffset=False)
-ax1.legend(fontsize=9, loc='best')
+ax1.legend(fontsize=7.5, loc='best', ncol=2)
 ax1.grid(True, alpha=0.3, which='both')
 
-# GRÁFICO 2: TEMPERATURA (ax2)
-
-ax2.plot(tempo_fixo, temp_fixo - 273.15, '^-', color=COR_FIXO, linewidth=1, markersize=8,
-         label=f'Passo fixo   | Temperatura_final = {temp_fixo[-1]-273.15} °C')
-ax2.plot(tempo_pid,  temp_pid  - 273.15, '*-', color=COR_PID,  linewidth=1, markersize=8,
-         label=f'PID adapt.   | Temperatura_final = {temp_pid[-1]-273.15} °C')
-ax2.plot(tempo_sub,  temp_sub  - 273.15, 'o-', color=COR_SUB,  linewidth=1, markersize=4,
-         label=f'Subcycling   | Temperatura_final = {temp_sub[-1]-273.15} °C')
-
+#  Temperatura 
+ax2.plot(tempo_fixo, temp_fixo - 273.15,      '^-', color=C_FIXO, lw=1, ms=4,
+         label=f'Completo   | Fixo        T={temp_fixo[-1]-273.15} °C')
+ax2.plot(tempo_pid,  temp_pid  - 273.15,      's-', color=C_FIXO,  lw=1, ms=4,
+         label=f'Completo   | PID         T={temp_pid[-1]-273.15} °C')
+ax2.plot(tempo_sub,  temp_sub  - 273.15,      'o-', color=C_FIXO,  lw=1, ms=3,
+         label=f'Completo   | Subcycling  T={temp_sub[-1]-273.15} °C')
+ax2.plot(tempo_simp, temp_simp_fixo - 273.15, '^--', color=C_SUB, lw=1, ms=4, alpha=0.7,
+         label=f'Simplific. | Fixo        T={temp_simp_fixo[-1]-273.15} °C')
+ax2.plot(tempo_spid, temp_simp_pid  - 273.15, 's--', color=C_SUB,  lw=1, ms=4, alpha=0.7,
+         label=f'Simplific. | PID         T={temp_simp_pid[-1]-273.15} °C')
+ax2.plot(tempo_ssub, temp_simp_sub  - 273.15, 'o--', color=C_SUB,  lw=1, ms=3, alpha=0.7,
+         label=f'Simplific. | Subcycling  T={temp_simp_sub[-1]-273.15} °C')
 ax2.set_ylabel('Temperatura (°C)')
 ax2.set_xscale('log')
-ax2.legend(fontsize=9, loc='best')
+ax2.legend(fontsize=7.5, loc='best', ncol=2)
 ax2.grid(True, alpha=0.3, which='both')
 
-# GRÁFICO 3: MASSA (ax3)
-ax3.plot(tempo_fixo, massa_fixo, '^-', color=COR_FIXO, linewidth=1, markersize=8,
-         label=f'Passo fixo   | Massa_final = {massa_fixo[-1]} mol')
-ax3.plot(tempo_pid,  massa_pid,  '*-', color=COR_PID,  linewidth=1, markersize=8,
-         label=f'PID adapt.   | Massa_final = {massa_pid[-1]} mol')
-ax3.plot(tempo_sub,  massa_sub,  'o-', color=COR_SUB,  linewidth=1, markersize=4,
-         label=f'Subcycling   | Massa_final = {massa_sub[-1]} mol')
-
+#  Massa 
+ax3.plot(tempo_fixo, massa_fixo,       '^-', color=C_FIXO, lw=1, ms=4,
+         label=f'Completo   | Fixo        m={massa_fixo[-1]} mol')
+ax3.plot(tempo_pid,  massa_pid,        's-', color=C_FIXO,  lw=1, ms=4,
+         label=f'Completo   | PID         m={massa_pid[-1]} mol')
+ax3.plot(tempo_sub,  massa_sub,        'o-', color=C_FIXO,  lw=1, ms=3,
+         label=f'Completo   | Subcycling  m={massa_sub[-1]} mol')
+ax3.plot(tempo_simp, massa_simp_fixo,  '^--', color=C_SUB, lw=1, ms=4, alpha=0.7,
+         label=f'Simplific. | Fixo        m={massa_simp_fixo[-1]} mol')
+ax3.plot(tempo_spid, massa_simp_pid,   's--', color=C_SUB,  lw=1, ms=4, alpha=0.7,
+         label=f'Simplific. | PID         m={massa_simp_pid[-1]} mol')
+ax3.plot(tempo_ssub, massa_simp_sub,   'o--', color=C_SUB,  lw=1, ms=3, alpha=0.7,
+         label=f'Simplific. | Subcycling  m={massa_simp_sub[-1]} mol')
 ax3.set_ylabel('Massa (mol)')
 ax3.set_xlabel('Tempo (s)')
 ax3.set_xscale('log')
-ax3.legend(fontsize=9, loc='best')
+ax3.legend(fontsize=7.5, loc='best', ncol=2)
 ax3.grid(True, alpha=0.3, which='both')
 
 plt.tight_layout()
-#plt.show()
-plt.savefig("grafico_completo.png")
+plt.show()
