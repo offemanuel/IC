@@ -75,7 +75,7 @@ while True:
             print(f"Exibindo: {arq}")
             display(Image(arq))
             
-    # Condição de Parada
+    # Condição de parada
     continuar = input("\nDeseja fazer outra simulação? (s/n): ").strip().lower()
     if continuar != 's':
         print("\nEncerrando o programa...")
