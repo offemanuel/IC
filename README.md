@@ -45,12 +45,7 @@ elif opcao == "5":
 else:
     print("Opção inválida!")
 
-arquivos = [
-    "grafico_subcycling.png",
-    "grafico_adaptativo.png",
-    "grafico_fixo.png",
-    "grafico_completo.png"
-]
+arquivos = [ "grafico_subcycling.png", "grafico_adaptativo.png","grafico_fixo.png", "grafico_completo.png"]
 
 for arq in arquivos:
     if os.path.exists(arq):
