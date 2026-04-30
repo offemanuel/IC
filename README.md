@@ -97,8 +97,7 @@ while True:
         f"grafico_dt_adaptativo_simplificacao_{raio}.png",
         f"grafico_dt_fixo_completo_{raio}.png",
         f"grafico_dt_fixo_simplificacao_{raio}.png",
-        f"grafico_all_{raio}.png"
-    ]
+        f"grafico_all_{raio}.png"]
 
     graficos_exibidos = 0
     for arq in arquivos:
