@@ -2,8 +2,8 @@
 RANK 0 - subsistema RÁPIDO - M_sub subpassos de T      
 RANK 1 - subsistema LENTO - 1 passo macro de (r, m)   
 
-Execução:
-  mpiexec -n 2 python IC2_completo_RK3_MPI_subcycling.py.py
+Execução no terminal:
+  mpiexec -n 2 python IC2_completo_RK3_MPI_subpassos.py.py
 """
 
 from mpi4py import MPI
@@ -17,7 +17,7 @@ size = comm.Get_size()
 if size != 2:
     if rank == 0:
         print("ERRO: este código requer exatamente 2 ranks MPI.\n"
-              "Execute: mpiexec -n 2 python IC2_completo_RK3_MPI_subcycling.py.py")
+              "Execute: mpiexec -n 2 python IC2_completo_RK3_MPI_subpassos.py.py")
     sys.exit(1)
 
 TAG_T_NEW = 10   # rank 0 → rank 1 : T atualizado
