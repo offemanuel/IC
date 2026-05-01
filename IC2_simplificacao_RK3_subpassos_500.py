@@ -202,7 +202,8 @@ ax1.set_ylabel('Raio da Gota (µm)', fontsize=12)
 ax1.set_xscale('log')
 ax1.legend(fontsize=10)
 ax1.grid(True, alpha=0.3)
- 
+ax1.ticklabel_format(axis='y', useOffset=False)
+
 # Temperatura
 ax2.plot(t_mr, temp_simp - 273.15, 'o-', color='#FF0000', linewidth=2,
          markersize=4, label=f'T_final = {temp_simp[-1] - 273.15} °C')
