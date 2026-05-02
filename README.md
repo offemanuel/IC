@@ -1,4 +1,4 @@
-## Como executar no Google Colab
+## Como executar o menu das simulações no Google Colab
 
 Você pode rodar este projeto diretamente no Google Colab, sem instalar nada localmente.
 
